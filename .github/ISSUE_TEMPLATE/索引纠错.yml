@@ -1,0 +1,41 @@
+name: 索引纠错
+description: 发现知识点写错了、课标引错了、易错点不准
+title: "[纠错] "
+labels: ["纠错"]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: 哪一课
+      placeholder: 八年级上册 第1课 鸦片战争
+    validations:
+      required: true
+
+  - type: textarea
+    id: wrong
+    attributes:
+      label: 现在写的是什么
+      description: 直接把那一行贴过来
+    validations:
+      required: true
+
+  - type: textarea
+    id: right
+    attributes:
+      label: 应该改成什么
+      description: 最好注明依据，比如教材第几页、课标第几页
+    validations:
+      required: true
+
+  - type: dropdown
+    id: level
+    attributes:
+      label: 错误性质
+      options:
+        - 史实错误（时间、人物、地点、数字）
+        - 课标表述不准
+        - 易错点判断有误
+        - 文字表述问题
+      default: 0
+    validations:
+      required: true

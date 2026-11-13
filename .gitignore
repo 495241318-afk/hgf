@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+
+# 教材原件、扫描件一律不入库，避免版权风险
+*.pdf
+*.PDF
+扫描件/

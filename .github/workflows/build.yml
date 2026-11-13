@@ -1,0 +1,75 @@
+name: 构建索引并发布
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  # 第一关：内容校验。字段缺失、课序重复，直接拦下来，不让错数据进主干。
+  check:
+    name: 校验索引
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install pyyaml
+
+      - name: 校验字段完整性与课序唯一性
+        run: python scripts/build.py --check
+
+      - name: 试构建
+        run: python scripts/build.py
+
+      - name: 上传进度报表
+        uses: actions/upload-artifact@v4
+        with:
+          name: 覆盖度报表
+          path: 报表/覆盖度报表.md
+
+  # 第二关：只有合并进 main 才发布，PR 阶段只看校验结果。
+  deploy:
+    name: 发布到 Pages
+    needs: check
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install pyyaml
+
+      - name: 构建检索页
+        run: python scripts/build.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
