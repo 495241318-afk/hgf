@@ -20,6 +20,11 @@ from pathlib import Path
 
 import yaml
 
+try:  # 正文渲染为 HTML 用，缺了也能退化成纯文本
+    import markdown
+except ImportError:  # pragma: no cover
+    markdown = None
+
 ROOT = Path(__file__).resolve().parent.parent
 INDEX_DIR = ROOT / "index"
 DOCS_DIR = ROOT / "docs"
@@ -103,6 +108,15 @@ def as_text(val) -> str:
     return str(val)
 
 
+def render_body(text: str) -> str:
+    """正文 Markdown 转 HTML；没有 markdown 库时退化为等宽纯文本。"""
+    if not text:
+        return ""
+    if markdown is None:
+        return f"<pre>{html.escape(text)}</pre>"
+    return markdown.markdown(text, extensions=["fenced_code", "tables", "nl2br"])
+
+
 def build_site(lessons: list[dict]) -> None:
     DOCS_DIR.mkdir(exist_ok=True)
 
@@ -122,6 +136,7 @@ def build_site(lessons: list[dict]) -> None:
             "教学建议": as_text(meta.get("教学建议", "")),
             "状态": meta.get("状态", ""),
             "正文": meta.get("_body", ""),
+            "正文HTML": render_body(meta.get("_body", "")),
             "路径": meta["_path"],
         })
 
@@ -190,6 +205,14 @@ summary::-webkit-details-marker {{ display:none; }}
 table {{ border-collapse:collapse; width:100%; font-size:14px; }}
 th, td {{ border:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }}
 th {{ background:var(--bg); width:88px; font-weight:600; }}
+.md h2 {{ font-size:14px; margin:16px 0 6px; padding-left:8px; border-left:3px solid var(--accent); }}
+.md h3 {{ font-size:13px; margin:12px 0 4px; }}
+.md ul, .md ol {{ padding-left:20px; margin:6px 0; }}
+.md p {{ margin:6px 0; }}
+.md pre {{ background:#f6f8fa; border:1px solid var(--line); border-radius:6px;
+           padding:10px; overflow:auto; font:12.5px/1.5 ui-monospace,Consolas,monospace; }}
+.md code {{ font-family:ui-monospace,Consolas,monospace; font-size:12.5px; }}
+.md blockquote {{ margin:8px 0; padding:2px 12px; border-left:3px solid var(--line); color:var(--sub); }}
 footer {{ max-width:960px; margin:24px auto; color:var(--sub); font-size:12px; }}
 @media print {{ .toolbar {{ display:none; }} details {{ break-inside:avoid; }} }}
 </style>
@@ -218,7 +241,7 @@ function render() {{
     (kw === '' || (d['课题'] + d['关键词'].join('') + d['知识点'].join('') + d['单元']).includes(kw))
   );
   if (!rows.length) {{ list.innerHTML = '<p style="color:#656d76">没有匹配的课时。</p>'; return; }}
-  list.innerHTML = rows.map(d => `
+  list.innerHTML = rows.map((d, i) => `
     <details>
       <summary>
         <div class="title">${{esc(d['册别'])}} 第${{d['课序']}}课 ${{esc(d['课题'])}}
@@ -235,9 +258,14 @@ function render() {{
           <tr><th>易错点</th><td>${{esc(d['易错点'])}}</td></tr>
           <tr><th>教学建议</th><td>${{esc(d['教学建议'])}}</td></tr>
         </table>
-        <h3>备注与板书</h3><pre style="white-space:pre-wrap;font:13px/1.6 inherit">${{esc(d['正文'])}}</pre>
+        <h3>备注与板书</h3>
+        <div class="md" data-body="${{i}}"></div>
       </div>
     </details>`).join('');
+  // 正文是渲染好的 HTML，单独注入避免转义与模板字符冲突
+  list.querySelectorAll('[data-body]').forEach(el => {{
+    el.innerHTML = rows[Number(el.dataset.body)]['正文HTML'] || '';
+  }});
 }}
 document.getElementById('q').addEventListener('input', e => {{ kw = e.target.value.trim(); render(); }});
 document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {{
