@@ -1,0 +1,55 @@
+name: 索引整理
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tidy:
+    if: "!startsWith(github.event.head_commit.message, '整理：')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 按册别归位并清理
+        run: |
+          find . -name "第*.md" -not -path "./docs/*" -not -path "./templates/*" -not -path "./.github/*" -not -path "./报表/*" | while read -r f; do
+            b=$(grep -m1 '^册别:' "$f" | sed 's/^册别:[[:space:]]*//' | tr -d '\r')
+            case "$b" in
+              七年级上册|七年级下册|八年级上册|八年级下册|九年级上册|九年级下册) ;;
+              *) continue ;;
+            esac
+            mkdir -p "index/$b"
+            cp -f "$f" "index/$b/$(basename "$f")"
+            echo "归位 $f -> index/$b/"
+          done
+          for d in index/*; do
+            n=$(basename "$d")
+            case "$n" in
+              七年级上册|七年级下册|八年级上册|八年级下册|九年级上册|九年级下册) ;;
+              *) rm -rf "$d"; echo "删除 $d" ;;
+            esac
+          done
+          for b in 七年级上册 七年级下册 八年级上册 八年级下册 九年级上册 九年级下册; do
+            find "index/$b" -mindepth 1 ! -name "*.md" -exec rm -rf {} + 2>/dev/null || true
+          done
+          rm -rf 九年级上册 索引全量-34课 *.zip
+          echo "---- 整理后 ----"
+          for b in 七年级上册 七年级下册 八年级上册 八年级下册 九年级上册 九年级下册; do
+            echo "$b: $(ls index/$b/*.md 2>/dev/null | wc -l) 课"
+          done
+
+      - name: 提交整理结果
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "没有需要整理的内容"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "整理：按册别归位并清理错位目录"
+          git push
