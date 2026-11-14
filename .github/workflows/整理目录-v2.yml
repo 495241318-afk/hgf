@@ -1,0 +1,128 @@
+name: 整理目录 v2（一次性）
+
+# 上一版 fix.yml 的「归位」「清理」「校验」都成功了，只有最后的 git push 被 GitHub 拒绝。
+# 原因是它在同一次提交里新建了 .github/workflows/quiz.yml —— GitHub 不允许用 Actions 自带的
+# 临时令牌去创建/修改工作流文件，整次推送因此被拒。
+#
+# v2 不再碰 .github/workflows，其余动作与 v1 完全一致，另补一个九下第16课的单元名修正。
+#
+# 用法：Actions → 整理目录 v2（一次性）→ Run workflow → 等 1 分钟。
+# 跑完再手动运行一次「构建索引并发布」，站点才会更新。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 归位与清理
+        run: |
+          set -e
+          B="v3-定稿与题库"
+          if [ -d "$B" ]; then
+            find "$B" -type f -name '第*.md' | sort | while IFS= read -r f; do
+              book=$(grep -m1 '^册别:' "$f" | sed 's/^册别:[[:space:]]*//' | tr -d '\r')
+              if [ -n "$book" ]; then
+                mkdir -p "index/$book"
+                cp -f "$f" "index/$book/$(basename "$f")"
+                echo "归位 $f → index/$book/"
+              fi
+            done
+
+            if [ -f "$B/scripts/quiz.py" ]; then cp -f "$B/scripts/quiz.py" scripts/; fi
+            if [ -d "$B/题库" ]; then mkdir -p 题库 && cp -rf "$B/题库/." 题库/; fi
+            if [ -f "$B/使用手册.html" ]; then cp -f "$B/使用手册.html" ./; fi
+            if [ -f "$B/README.md" ]; then cp -f "$B/README.md" ./; fi
+            rm -rf "$B"
+            echo "已删除 $B/"
+          else
+            echo "没有 $B/，跳过归位（可能已整理过）"
+          fi
+
+          rm -rf 七年级上册 七年级下册 八年级上册 八年级下册 九年级上册 九年级下册
+          rm -f 推送上线.sh 推送上线说明.md
+          echo "已清理根目录下错位的册别文件夹与遗留脚本"
+
+      - name: 修正九下第16课单元名
+        run: |
+          python - <<'PY'
+          import pathlib
+          p = pathlib.Path('index/九年级下册/第16课-冷战.md')
+          if p.exists():
+              s = p.read_text(encoding='utf-8')
+              old = '第五单元 二战后的世界变化'
+              new = '第五单元 冷战和美苏对峙的世界'
+              if old in s:
+                  p.write_text(s.replace(old, new), encoding='utf-8')
+                  print('已把九下第16课单元名改为：', new)
+              else:
+                  print('九下第16课单元名已是正确值，无需修改')
+          else:
+              print('未找到九下第16课，跳过')
+          PY
+
+      - name: 校验并重建站点（不通过就停在这里）
+        run: |
+          set -e
+          python scripts/build.py --check
+          python scripts/build.py
+          python - <<'PY'
+          import json, collections, pathlib
+          d = json.load(open('docs/data.json', encoding='utf-8'))
+          c = collections.Counter(x['状态'] for x in d)
+          print('课时数：', len(d), '状态：', dict(c))
+          bad = [f"{x['册别']}第{x['课序']}课 {x['课题']}" for x in d if x['状态'] != '已定稿']
+          print('未定稿：', bad if bad else '无')
+          q = pathlib.Path('题库')
+          print('题库文件数：', len(list(q.glob('*'))) if q.exists() else 0)
+          print('使用手册：', pathlib.Path('使用手册.html').exists())
+          print('quiz.py：', pathlib.Path('scripts/quiz.py').exists())
+          PY
+
+      - name: 提交并推送
+        run: |
+          set -e
+          git config user.name "tidy-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          echo "--- 本次改动 ---"
+          git diff --cached --stat | tail -20
+          if git diff --cached --quiet; then
+            echo "没有需要提交的改动"
+            exit 0
+          fi
+          git commit -m "整理目录：课时归位到 index/，题库与手册就位，删除错位文件夹，修正九下16课单元名"
+          echo "--- 推送 ---"
+          if ! git push origin HEAD:main > /tmp/push.log 2>&1; then
+            echo "### 推送失败，错误信息如下" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -20 /tmp/push.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat /tmp/push.log
+            exit 1
+          fi
+          echo "推送成功：$(git rev-parse --short HEAD)"
+
+      - name: 结果摘要
+        if: always()
+        run: |
+          echo "### 整理结果" >> $GITHUB_STEP_SUMMARY
+          echo "- 课时文件数：$(find index -name '第*.md' | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- 题库文件：$(ls 题库 2>/dev/null | wc -l)" >> $GITHUB_STEP_SUMMARY
+          echo "- 最新提交：$(git log --oneline -1)" >> $GITHUB_STEP_SUMMARY
+          echo "- 远程分支：$(git rev-parse HEAD) / main" >> $GITHUB_STEP_SUMMARY
