@@ -1,0 +1,121 @@
+name: 整理目录（一次性）
+
+# 用途：上一次上传把整个文件夹拖进了仓库，形成了 v3-定稿与题库/ 这样多一层的目录，
+# 还留下几个挂在根目录的旧册别文件夹。
+# 这个工作流会自动：把课时按「册别」归位到 index/、把题库和手册搬到根目录、删掉多余文件夹，
+# 校验通过后才提交，校验不过就停下，不会把坏的提交推上去。
+#
+# 用法：Actions → 整理目录（一次性）→ Run workflow → 等 1 分钟。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 写入网页出题工作流
+        run: |
+          mkdir -p .github/workflows
+          cat > .github/workflows/quiz.yml <<'YAML'
+          name: 生成题库
+
+          on:
+            workflow_dispatch:
+              inputs:
+                book:
+                  description: '册别，留空表示六册全出（如：八年级上册）'
+                  required: false
+                  default: ''
+                unit:
+                  description: '单元，可留空（如：第三单元）'
+                  required: false
+                  default: ''
+                types:
+                  description: '题型：辨析,填空,简答'
+                  required: false
+                  default: '辨析,填空'
+
+          permissions:
+            contents: write
+
+          jobs:
+            quiz:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-python@v5
+                  with:
+                    python-version: '3.11'
+                - run: pip install -r requirements.txt
+                - name: 生成题库
+                  run: |
+                    python scripts/quiz.py \
+                      --book "${{ inputs.book }}" \
+                      --unit "${{ inputs.unit }}" \
+                      --type "${{ inputs.types }}"
+                - name: 提交回仓库
+                  run: |
+                    git config user.name "quiz-bot"
+                    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                    git add 题库
+                    if git diff --cached --quiet; then
+                      echo "题库没有变化"
+                    else
+                      git commit -m "自动生成题库：${{ inputs.book }}"
+                      git push
+                    fi
+          YAML
+          echo "已写入 .github/workflows/quiz.yml"
+
+      - name: 归位与清理
+        run: |
+          set -e
+          B="v3-定稿与题库"
+          if [ -d "$B" ]; then
+            find "$B" -type f -name '第*.md' | while IFS= read -r f; do
+              book=$(grep -m1 '^册别:' "$f" | sed 's/^册别:[[:space:]]*//' | tr -d '\r')
+              if [ -n "$book" ]; then
+                mkdir -p "index/$book"
+                cp -f "$f" "index/$book/$(basename "$f")"
+                echo "归位 $f → index/$book/"
+              fi
+            done
+
+            if [ -f "$B/scripts/quiz.py" ]; then cp -f "$B/scripts/quiz.py" scripts/; fi
+            if [ -d "$B/题库" ]; then mkdir -p 题库 && cp -rf "$B/题库/." 题库/; fi
+            if [ -f "$B/使用手册.html" ]; then cp -f "$B/使用手册.html" ./; fi
+            if [ -f "$B/README.md" ]; then cp -f "$B/README.md" ./; fi
+            rm -rf "$B"
+            echo "已删除 $B/"
+          fi
+
+          rm -rf 七年级上册 七年级下册 八年级上册 八年级下册 九年级上册 九年级下册
+          echo "已清理根目录下错位的册别文件夹"
+
+      - name: 校验（不通过就停在这里）
+        run: python scripts/build.py --check
+
+      - name: 提交并推送
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "没有需要提交的改动"
+          else
+            git -c user.name="tidy-bot" \
+                -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+                commit -m "整理目录：课时归位到 index/，题库与手册就位，删除错位文件夹"
+            git push
+          fi
