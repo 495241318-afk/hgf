@@ -23,7 +23,7 @@ jobs:
               *) continue ;;
             esac
             mkdir -p "index/$b"
-            cp -f "$f" "index/$b/$(basename "$f")"
+            cp -f "$f" "index/$b/$(basename "$f")" 2>/dev/null || true
             echo "归位 $f -> index/$b/"
           done
           for d in index/*; do
