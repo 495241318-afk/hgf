@@ -1,0 +1,61 @@
+name: 生成题库
+
+# 在网页上点一下就能出题，不用在电脑上装 Python。
+# Actions → 生成题库 → Run workflow → 填册别（如 八年级上册）→ Run
+# 跑完题库会提交回仓库，手机上打开 题库/打印版.html 即可看题。
+
+on:
+  workflow_dispatch:
+    inputs:
+      book:
+        description: '册别，留空表示六册全出（如：八年级上册）'
+        required: false
+        default: ''
+      unit:
+        description: '单元，可留空（如：第三单元）'
+        required: false
+        default: ''
+      types:
+        description: '题型：辨析,填空,简答'
+        required: false
+        default: '辨析,填空'
+      per_lesson:
+        description: '每课题数上限'
+        required: false
+        default: '3'
+
+permissions:
+  contents: write
+
+jobs:
+  quiz:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 生成题库
+        run: |
+          python scripts/quiz.py \
+            --book "${{ inputs.book }}" \
+            --unit "${{ inputs.unit }}" \
+            --type "${{ inputs.types }}" \
+            --per-lesson "${{ inputs.per_lesson }}"
+
+      - name: 提交回仓库
+        run: |
+          git config user.name "quiz-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add 题库
+          if git diff --cached --quiet; then
+            echo "题库没有变化，跳过提交"
+          else
+            git commit -m "自动生成题库：${{ inputs.book }}"
+            git push
+          fi
