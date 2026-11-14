@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>初中历史教材索引 · 使用手册</title>
+<style>
+  @page { size: A4; margin: 15mm 16mm 13mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Songti SC", SimSun, "Noto Serif CJK SC", serif; color: #1a1a1a;
+         font-size: 10.4pt; line-height: 1.55; margin: 0; }
+  h1 { font-size: 19pt; margin: 0 0 1mm; letter-spacing: 1px; }
+  .lede { font-size: 10pt; color: #555; margin: 0 0 6mm; }
+  h2 { font-size: 12pt; margin: 5.5mm 0 2mm; padding-left: 2.5mm;
+       border-left: 3px solid #333; line-height: 1.2; }
+  p { margin: 0 0 2mm; }
+  table { width: 100%; border-collapse: collapse; margin: 1.5mm 0 2mm; font-size: 9.8pt; }
+  th, td { border: 1px solid #c9c9c9; padding: 1.6mm 2.2mm; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; font-weight: 700; }
+  code { font-family: Consolas, "Courier New", monospace; font-size: 9.2pt;
+         background: #efefef; padding: 0.3mm 1.3mm; border-radius: 1mm; }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: s; }
+  .steps li { counter-increment: s; position: relative; padding-left: 7.5mm; margin-bottom: 1.6mm; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 0.2mm;
+        width: 5mm; height: 5mm; line-height: 5mm; text-align: center; font-size: 8.5pt;
+        background: #333; color: #fff; border-radius: 50%; font-weight: 700; }
+  .note { border: 1px solid #bbb; padding: 2.5mm 3mm; font-size: 9.6pt; background: #fafafa; margin: 2mm 0; }
+  .note b { color: #000; }
+  .two { display: flex; gap: 6mm; }
+  .two > div { flex: 1; }
+  code.block { display: block; margin: 1mm 0 2.4mm; padding: 1.1mm 2.2mm; background: #f1f1f1;
+               border-left: 2px solid #999; font-size: 9.2pt; }
+  .addr { font-family: Consolas, monospace; font-size: 9pt; color: #0b4a8f; word-break: break-all; }
+  footer { margin-top: 6mm; border-top: 1px solid #ccc; padding-top: 2mm;
+           font-size: 8.6pt; color: #666; display: flex; justify-content: space-between; }
+  .page2 { page-break-before: always; }
+  .kicker { display: inline-block; font-size: 8.6pt; letter-spacing: 2px; color: #666; margin-bottom: 1mm; }
+</style>
+</head>
+<body>
+
+<span class="kicker">人教版 7—9 年级 · 六册 129 课</span>
+<h1>教材索引 · 使用手册</h1>
+<p class="lede">一个能搜、能改、能共享的备课资料库。手机、教室电脑、办公室都能打开；改一次，所有人看到的都是新版。</p>
+
+<h2>一、三个入口，认准这三个网址</h2>
+<table>
+  <tr><th style="width:26%">什么时候用</th><th>打开哪里</th></tr>
+  <tr>
+    <td>备课查知识点、搜关键词</td>
+    <td><span class="addr">https://495241318-afk.github.io/hgf/</span><br>检索页：搜课题 / 关键词 / 知识点，上方六册按钮可按册筛选</td>
+  </tr>
+  <tr>
+    <td>中考复习、按主线串课</td>
+    <td><span class="addr">https://495241318-afk.github.io/hgf/topics.html</span><br>10 个专题，引用 83 课时（中国史 6 + 世界史 4）</td>
+  </tr>
+  <tr>
+    <td>改内容、看进度</td>
+    <td><span class="addr">https://github.com/495241318-afk/hgf</span><br>仓库；<code>报表/覆盖度报表.md</code> 里有分册进度与定稿率</td>
+  </tr>
+</table>
+<p class="note"><b>手机用法：</b>用浏览器打开检索页 → 菜单里选“添加到主屏幕”，之后像 App 一样一点就开。</p>
+
+<h2>二、备课查一课：30 秒</h2>
+<ol class="steps">
+  <li>打开检索页，在搜索框输入关键词（如“洋务运动”“推恩令”“冷战”）。</li>
+  <li>点册别按钮缩小范围；点卡片展开，看到课标、核心素养、知识点、重难点、易错点、教学建议。</li>
+  <li>要投屏就按 <code>Ctrl+P</code> 直接打印，或把某个知识点的文字复制到课件里。</li>
+</ol>
+
+<h2>三、改一课：1 分钟，不用装软件</h2>
+<ol class="steps">
+  <li>打开仓库，进 <code>index/</code> → 点册别文件夹 → 点开那一课（文件名形如 <code>第04课-洋务运动.md</code>）。</li>
+  <li>点右上角的铅笔图标进入编辑，直接改正文或元数据。</li>
+  <li>页面下方点 <code>Commit changes</code>。约 1—2 分钟后网页自动更新，不用手动发布。</li>
+</ol>
+<p class="note"><b>写坏了也不要紧：</b>提交后系统会自动校验。字段缺失、课序重复会被直接拦下并提示错在哪一行，网页不会变成乱版。</p>
+
+<h2>四、加一课：复制模板，改五个地方</h2>
+<ol class="steps">
+  <li>打开 <code>templates/课时模板.md</code>，右上角点“复制原始文件”把内容复制下来。</li>
+  <li>进 <code>index/对应册别/</code>，点 <code>Add file → Create new file</code>，文件名写 <code>第07课-课题名.md</code>（课序两位数）。</li>
+  <li>粘贴内容，至少改这五项：<code>册别</code>、<code>单元</code>、<code>课序</code>、<code>课题</code>、<code>状态</code>。</li>
+  <li>下方提交。校验通过后，检索页和覆盖度报表会自动多出这一课。</li>
+</ol>
+
+<div class="page2">
+<h2>五、出一份练习：一条命令，六册都能出</h2>
+<p>在仓库文件夹里打开终端（Windows 用 Git Bash 或 PowerShell），运行以下命令。第一次用先装依赖：<code>pip install -r requirements.txt</code>；Windows 上命令里的 <code>python</code> 若报错，换成 <code>py</code>，Mac 上换成 <code>python3</code>。</p>
+<table>
+  <tr><th style="width:30%">想要什么</th><th>命令</th></tr>
+  <tr><td>整册（辨析 + 填空）</td><td><code>python scripts/quiz.py -b 八年级上册</code></td></tr>
+  <tr><td>只要一个单元</td><td><code>python scripts/quiz.py -b 八年级上册 -u 第三单元</code></td></tr>
+  <tr><td>加上简答题</td><td><code>python scripts/quiz.py -b 九年级下册 -t 辨析,填空,简答</code></td></tr>
+</table>
+<p class="note"><b>不想装 Python：</b>仓库里点 <code>Actions → 生成题库 → Run workflow</code>，填册别运行，两分钟后题库自动提交回仓库，手机上打开 <code>题库/打印版.html</code> 就能看题。</p>
+<p>产物都在 <code>题库/</code> 目录：<code>八年级上册.md</code> 是题库，含答案与出处，便于校对；<code>八年级上册-打印版.html</code> 用浏览器打开后按 <code>Ctrl+P</code> 直接印，答案在最后一页。</p>
+<p class="note"><b>题型说明：</b>辨析题把易错点原位改成两个选项（如“洋务运动是（A. 资产阶级改革 / B. 地主阶级的自救运动）”），题干取自原文，不会出现机器造句的病句；填空题挖年代、文献、关键名词；简答题按重难点设问。<b>自动出题只作初稿</b>，印前扫一眼答案里的出处，按班级情况微调。</p>
+
+<h2>六、维护节奏：别让它变成负担</h2>
+<table>
+  <tr><th style="width:22%">时间</th><th style="width:52%">做什么</th><th>耗时</th></tr>
+  <tr><td>每上完一个单元</td><td>把“教学建议”补一句真实课堂反馈（学生最卡在哪），状态改为 <code>已定稿</code></td><td>5 分钟</td></tr>
+  <tr><td>每学期末</td><td>看覆盖度报表，补定稿率低的册；顺手清掉过时的教学建议</td><td>10 分钟</td></tr>
+  <tr><td>教材或课标修订</td><td>用检索页搜“课标”，把变动过的课时统一更新</td><td>按需</td></tr>
+</table>
+
+<h2>七、四条底线</h2>
+<div class="two">
+  <div>
+    <p><b>① 不放教材原件。</b>只放自己整理的要点，不传 PDF 与扫描页（版权），仓库已屏蔽 <code>*.pdf</code>。</p>
+    <p><b>② 不写学生信息。</b>仓库是公开的，不要出现姓名、成绩、班级排名。</p>
+  </div>
+  <div>
+    <p><b>③ 打不开先换网。</b><code>github.io</code> 在国内偶发不通，换手机流量或等几分钟即可；长期影响可加国内镜像。</p>
+    <p><b>④ 共享给同事。</b>直接发链接，对方无需注册即可查看；要一起改，把他加成协作者。</p>
+  </div>
+</div>
+
+<h2>八、这个库为什么值得维护</h2>
+<p>它不是网盘，是<b>可检索、可校验、有留痕</b>的资料库：每次改动都有记录，字段写错会被自动拦下，六册 129 课结构一致，换册换年级都不用重新适应。带新人时，一份链接就是一套现成的备课底稿。</p>
+
+<footer>
+  <span>人教版初中历史教材知识库索引 · 使用手册</span>
+  <span>内容许可 CC BY-NC-SA 4.0　|　2026-11</span>
+</footer>
+</div>
+
+</body>
+</html>
