@@ -264,6 +264,7 @@ th {{ background:var(--bg); width:88px; font-weight:600; }}
 .md blockquote {{ margin:8px 0; padding:2px 12px; border-left:3px solid var(--line); color:var(--sub); }}
 .nav {{ margin:2px 0 0; }}
 .nav a {{ font-size:13px; color:var(--accent); text-decoration:none; }}
+.nav a + a {{ margin-left:16px; }}
 .nav a:hover {{ text-decoration:underline; }}
 footer {{ max-width:960px; margin:24px auto; color:var(--sub); font-size:12px; }}
 @media print {{ .toolbar {{ display:none; }} details {{ break-inside:avoid; }} }}
@@ -274,7 +275,7 @@ footer {{ max-width:960px; margin:24px auto; color:var(--sub); font-size:12px; }
   <h1>人教版初中历史教材知识库索引</h1>
   <div class="sub">共 {total} 课，已定稿 {done} 课 ｜ 数据源：仓库 index/ 目录下每课一个 Markdown 文件，本页由脚本自动生成</div>
   <div class="stats">{cards}</div>
-  <div class="nav"><a href="topics.html">按专题复习 · 中考串课 →</a></div>
+  <div class="nav"><a href="topics.html">按专题复习 · 中考串课 →</a><a href="quiz.html">按册打印练习 →</a></div>
 </header>
 <div class="toolbar">
   <input type="search" id="q" placeholder="搜课题、关键词、知识点……">
@@ -346,7 +347,7 @@ body{margin:0;padding:20px;font:15px/1.7 -apple-system,"PingFang SC","Microsoft 
 header,main{max-width:960px;margin:0 auto}
 h1{font-size:22px;margin:0 0 6px}
 .sub{color:var(--sub);font-size:13px}
-.back{display:inline-block;margin:10px 0 0;font-size:13px;color:var(--accent);text-decoration:none}
+.back{display:inline-block;margin:10px 16px 0 0;font-size:13px;color:var(--accent);text-decoration:none}
 .back:hover{text-decoration:underline}
 .toolbar{position:sticky;top:0;background:var(--bg);padding:10px 0;z-index:5;display:flex;gap:8px;overflow-x:auto;max-width:960px;margin:0 auto}
 .chip{white-space:nowrap;padding:5px 12px;border:1px solid var(--line);border-radius:99px;background:var(--card);font-size:13px;cursor:pointer}
@@ -384,7 +385,7 @@ footer{max-width:960px;margin:24px auto;color:var(--sub);font-size:12px}
 <header>
   <h1>中考专题复习 · 横向串课</h1>
   <div class="sub">__COUNT__ 个专题，串起 __LESSONS__ 条课时 ｜ 与全量索引共用同一批数据，改课时后本页自动更新</div>
-  <a class="back" href="index.html">← 返回全量课时索引</a>
+  <a class="back" href="index.html">← 返回全量课时索引</a><a class="back" href="quiz.html">按册打印练习 →</a>
 </header>
 <div class="toolbar" id="bar"></div>
 <main id="list"></main>
@@ -454,6 +455,30 @@ def build_topics(topics: list[dict]) -> None:
     (DOCS_DIR / "topics.html").write_text(page, encoding="utf-8")
 
 
+def publish_quiz() -> bool:
+    """把 题库/打印版.html 发布为 docs/quiz.html，让手机上也能直接看题、打印。
+
+    题库由 scripts/quiz.py 生成；没有题库时静默跳过，不影响站点构建。
+    """
+    src = ROOT / "题库" / "打印版.html"
+    if not src.exists():
+        return False
+    html = src.read_text(encoding="utf-8")
+    # 在页眉补一个返回索引的入口，方便从练习页跳回检索页
+    back = ('<div style="max-width:820px;margin:0 auto 10px;font:13px/1.6 system-ui;'
+            'color:#666"><a href="index.html" style="color:#2563eb;text-decoration:none">'
+            '← 返回课时索引</a>　|　<a href="topics.html" style="color:#2563eb;'
+            'text-decoration:none">按专题复习</a></div>')
+    screen = ('<style>@media screen{body{max-width:820px;margin:0 auto;padding:20px 26px 60px;'
+              'background:#fff;box-shadow:0 0 0 1px #eee}'
+              '.opt{width:47%}}</style>')
+    if "<body" in html and back not in html:
+        idx = html.index(">", html.index("<body")) + 1
+        html = html[:idx] + "\n" + screen + back + html[idx:]
+    (DOCS_DIR / "quiz.html").write_text(html, encoding="utf-8")
+    return True
+
+
 def build_report(lessons: list[dict]) -> None:
     REPORT_DIR.mkdir(exist_ok=True)
     lines = ["# 教材知识库索引 · 覆盖度报表", ""]
@@ -514,6 +539,7 @@ def main() -> int:
     build_site(lessons)
     build_topics(topics)
     build_report(lessons)
+    quiz_ok = publish_quiz()
 
     books = {}
     for m in lessons:
@@ -521,6 +547,8 @@ def main() -> int:
     print(f"已生成 docs/index.html 与 报表/覆盖度报表.md，共 {len(lessons)} 课")
     if topics:
         print(f"已生成 docs/topics.html，共 {len(topics)} 个复习专题")
+    if quiz_ok:
+        print("已发布 docs/quiz.html（按册打印练习，来源 题库/打印版.html）")
     for book in BOOK_ORDER:
         print(f"  {book}：{books.get(book, 0)} 课")
     if errors:
